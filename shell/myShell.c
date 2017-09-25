@@ -1,3 +1,10 @@
+/*
+Code created by: Jose Yanez
+Finishd: 9/24/2017-:-8:50 PM MT
+ */
+
+
+
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -57,6 +64,9 @@ char* concString(char* s1, char* s2){
   for( i=0; s1[i] != '\0'; i++){
     newString[i]= s1[i];
   }
+  newString[i]='/';                         ///////// puts the slash for the directory but there could be a better way
+                                            //////// To do it in the main  this is just for meeting the deadline.   
+  i++;
   for(int j =0; s2[j] != '\0';j++,i++){
     newString[i]=s2[j]; 
   }
@@ -86,58 +96,74 @@ int main(int arc, char **argv, char **envp){
     scanf("%[^\n]%*c", cmd1);
     out = stringComp(cmd1,"exit");
     tVec= myToc(cmd1,' ');
+    
     command= tVec[0];
+    
     path =getPath(envp);// This will call the getPath function and returns a string with all the paths
     paths=myToc(path,':');// This will separate all the paths possibles for the command by ':'
-    printf("%s\n" ,paths[0] );
-
+                                
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
     //in case of failling we will try the aproach of looking trough all the paths
-    if(stat(command,&buf) == 0 &&  buf.st_mode == S_IXOTH){
-      write(1,"Command Found!",15);
-    }
+    if(stat(command,&buf) == 0 ){
+      write(1,"Command Found!\n",15);
+        pID = fork();
 
-    else{
-      for(int i=0 ; paths[i] != '\0';i++){
-	char *commPath = concString(paths[i],command);
-	if(stat(commPath,&buf) == 0 &&  buf.st_mode == S_IXOTH){
-      write(1,"Command Found!",15);
-      pID = fork();
+      
       if(pID < 0){
       perror("Fork Error");
       }
 
-    else if( pID==0){
+      else if( pID==0){
+      
+      execve(command,tVec,envp);
+      }
+    }
+    // After failing to get the path we will look in all the possible paths for the path with your exe
+    
+    else{
+    
+      for(int i=0 ; paths[i] != '\0';i++){
+	char *commPath = concString(paths[i],command);// Concatenation of the path and the command
+	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
+      write(1,"Command Found!\n",15);
+      pID = fork();
+
+      
+      if(pID < 0){
+      perror("Fork Error");
+      }
+
+      else if( pID==0){
       
       execve(commPath,tVec,envp);
-    }
-    else{
-
-      int waitVal, waitStatus;
-      char buf[100];
-      int childStatus; 
-      waitVal= waitpid(pID,&waitStatus,0);
-      if (waitVal == pID) {
-	printf("child exited with value %d, %d\n", waitStatus, WEXITSTATUS(waitStatus));
       }
-      else {
-      printf("strange: waitpid returned %d\n", waitVal);
+      // After we create the child we proceed to make the parent wait 
+      else{
+
+	int waitVal, waitStatus;
+	char buf[100];
+	int childStatus; 
+	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
+	if (waitStatus != 0){
+	  printf("Terminated with %i\n", waitStatus);
+	}
+	if (waitVal == pID) {
+	  printf("child exited with value %d, %d\n", waitStatus, WEXITSTATUS(waitStatus));
+      }
+	else {
+	  printf("strange: waitpid returned %d\n", waitVal);
     }
-    return 0;
-  }
+  
+      }
+      
 	}
       }
+      if(!stringComp(command,"exit")){
+      write(1,"Command NOT Found!\n",19);  
     }
-      
-    // printf("%s\n",command);
-
-    //  printf("%s\n", getPath(envp));
-    
-    /* test= concString("Hello","World");
-    printf("%s\n", test);
-    */
-	
+	}
+      	
   }
   return 1;
 }

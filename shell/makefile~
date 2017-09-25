@@ -1,9 +1,0 @@
-
-all: myShell
-
-CFLAGS = -g -O2
-
-test: test1.o myShell.o
-	cc -o test1  myShell.o
-clean:
-	rm -f  *.o test1 test1.exe
