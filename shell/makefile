@@ -1,5 +1,5 @@
 
-all: myShell mytoc
+all: myShell 
 
 CFLAGS = -g -O2
 
