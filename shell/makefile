@@ -1,4 +1,3 @@
-
 all: myShell 
 
 CFLAGS = -g -O2

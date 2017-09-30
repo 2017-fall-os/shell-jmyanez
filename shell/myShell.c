@@ -1,6 +1,4 @@
 
-
-
 /*
 Code created by: Jose Yanez
 Finishd: 9/24/2017-:-8:50 PM MT
@@ -61,25 +59,22 @@ char* concString(char* s1, char* s2){
   for( i=0; s1[i] != '\0'; i++){
     newString[i]= s1[i];
   }
-  newString[i]='/';                         ///////// puts the slash for the directory but there could be a better way
+  // newString[i]='/';                         ///////// puts the slash for the directory but there could be a better way
                                             //////// To do it in the main  this is just for meeting the deadline.   
-  i++;
+  
   for(int j =0; s2[j] != '\0';j++,i++){
     newString[i]=s2[j]; 
   }
   newString[i] = '\0';
 
-
+  printf("%s\n",newString);
   return newString;
 }
 
-int cdCheck(char* command, char** tVec){
-if(stringComp(command,"cd")){
-       if(stringComp(tVec[1],"..")){
-      printf("CHANGE DIR\n");
+ 
+char** getPrevDir(char* cwd){
 
-      	}
-    }
+
 }
 
 
@@ -100,23 +95,33 @@ int main(int arc, char **argv, char **envp){
     scanf("%[^\n]%*c", cmd1);
     out = stringComp(cmd1,"exit");
     tVec= myToc(cmd1,' ');
+    char *cwd = getcwd(cwd,100);
     
     command= tVec[0];
-    
     path =getPath(envp);// This will call the getPath function and returns a string with all the paths
     paths=myToc(path,':');// This will separate all the paths possibles for the command by ':'
 
-    if(cdCheck(command,tVec)){
+    // If the command is change directory "cd" then we will execute the chdir() passing the dessired directory 
+    if(stringComp(command,"cd")){
+       if(tVec[1]!='\0' && stringComp(tVec[1],"..")){
+	 
+	 getPrevDir(cwd);
 
-    }
+      	}
+    
+
+  
 
 
-    else if(tVec[1]!='\0' && tVec[1]=='|'){
+    else if(tVec[1]!='\0' && tVec[1]=="|"){
 
       printf("La Pipa de la paz");
 
 
+    
     }
+    }
+    
     
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
@@ -142,8 +147,8 @@ int main(int arc, char **argv, char **envp){
     
       for(int i=0 ; paths[i] != '\0';i++){
 	
-	char *commPath = concString(paths[i],command);// Concatenation of the path and the command
-
+	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
+	commPath = concString(commPath,command);
 	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
       write(1,"Command Found!\n",15);
       found=1;
@@ -180,12 +185,14 @@ int main(int arc, char **argv, char **envp){
 	}
       }
 
-      
+    
       if(!stringComp(command,"exit")&& found!=1){
       write(1,"Command NOT Found!\n",19);  
     }
-	}
+    }	
       	
-  }
+  }  
   return 1;
-} 
+
+  
+}
