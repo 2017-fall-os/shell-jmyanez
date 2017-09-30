@@ -1,10 +1,8 @@
+
 /*
 Code created by: Jose Yanez
 Finishd: 9/24/2017-:-8:50 PM MT
  */
-
-
-
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -12,9 +10,6 @@ Finishd: 9/24/2017-:-8:50 PM MT
 #include <unistd.h>
 #include "mytoc.c"
 #include "myShell.h"
-
-
-
 
 // This will recieve the enviromental variable to look for the path
 char* getPath(char **envp){
@@ -76,7 +71,14 @@ char* concString(char* s1, char* s2){
   return newString;
 }
 
+int cdCheck(char* command, char** tVec){
+if(stringComp(command,"cd")){
+       if(stringComp(tVec[1],"..")){
+      printf("CHANGE DIR\n");
 
+      	}
+    }
+}
 
 
 // Shell main functin
@@ -84,15 +86,15 @@ char* concString(char* s1, char* s2){
 int main(int arc, char **argv, char **envp){
  
   char cmd1[60];
-  int out  =0, pID; // verifies if te program keeps running
+  int out  =0, pID, found=0; // verifies if te program keeps running
   char **tVec;//This will save the tokenized strings
-  char **paths,  *path, *test;
+  char **paths,  *path;
   struct stat buf;
   while(out!=1){
 
     char *command = NULL;    
     
-    write(1,"$ ",2);
+    write(1,"$\n",1);
     scanf("%[^\n]%*c", cmd1);
     out = stringComp(cmd1,"exit");
     tVec= myToc(cmd1,' ');
@@ -101,13 +103,26 @@ int main(int arc, char **argv, char **envp){
     
     path =getPath(envp);// This will call the getPath function and returns a string with all the paths
     paths=myToc(path,':');// This will separate all the paths possibles for the command by ':'
-                                
+
+    if(cdCheck(command,tVec)){
+
+    }
+
+
+    else if(tVec[1]!='\0' && tVec[1]=='|'){
+
+      printf("La Pipa de la paz");
+
+
+    }
+    
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
     //in case of failling we will try the aproach of looking trough all the paths
-    if(stat(command,&buf) == 0 ){
+    else if(stat(command,&buf) == 0 ){
       write(1,"Command Found!\n",15);
-        pID = fork();
+      found=1;
+      pID = fork();
 
       
       if(pID < 0){
@@ -124,9 +139,12 @@ int main(int arc, char **argv, char **envp){
     else{
     
       for(int i=0 ; paths[i] != '\0';i++){
+	
 	char *commPath = concString(paths[i],command);// Concatenation of the path and the command
+
 	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
       write(1,"Command Found!\n",15);
+      found=1;
       pID = fork();
 
       
@@ -159,11 +177,13 @@ int main(int arc, char **argv, char **envp){
       
 	}
       }
-      if(!stringComp(command,"exit")){
+
+      
+      if(!stringComp(command,"exit")&& found!=1){
       write(1,"Command NOT Found!\n",19);  
     }
 	}
       	
   }
   return 1;
-}
+} 
