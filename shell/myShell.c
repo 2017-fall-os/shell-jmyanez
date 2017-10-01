@@ -143,10 +143,8 @@ int main(int arc, char **argv, char **envp){
 
       else if( pid==0){
 	printf("child: fork returned %d\n", pid);
-
- 
-       execve(command,pipeComm1,envp);
-      }//elseifpid==0 
+	execve(command,pipeComm1,envp);
+      }//END OF elseifpid==0 
 
       else{
 	printf("HEllo this is parmen\n");
@@ -166,7 +164,7 @@ int main(int arc, char **argv, char **envp){
 	printf("child2: fork returned %d\n", pid);
 
  
-	//execve(command,pipeComm2,envp);
+	execve(command,pipeComm2,envp);
 	}
 
 	else{ //Back to parent second time 
