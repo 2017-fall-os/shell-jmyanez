@@ -92,7 +92,7 @@ char* getPrevDir(char* cwd){
 
 int main(int arc, char **argv, char **envp){
  
-  char cmd1[60];
+  char cmd1[100];
   int out = 0, pID, found=0; // verifies if te program keeps running
   char **tVec;//This will save the tokenized strings
   char **paths,  *path;
@@ -112,10 +112,10 @@ int main(int arc, char **argv, char **envp){
     command= tVec[0];
     path =getPath(envp);// This will call the getPath function and returns a string with all the paths
     paths=myToc(path,':');// This will separate all the paths possibles for the command by ':'
-
+    
     char **tPipes = myToc(cmd1,'|');
     
-    
+      
     // If the command is change directory "cd" then we will execute the chdir() passing the dessired directory 
     if(stringComp(command,"cd")){
        if(tVec[1]!='\0' && stringComp(tVec[1],"..")){
@@ -150,7 +150,6 @@ int main(int arc, char **argv, char **envp){
       else{
 	printf("HEllo this is parmen\n");
 	int waitVal, waitStatus;
-	char buf[100];
 	int childStatus; 
 	printf("parent: child's pid=%d\n", pid);
 
@@ -189,7 +188,7 @@ int main(int arc, char **argv, char **envp){
 	for(int i=0 ; paths[i] != '\0';i++){
 	
 	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
-	commPath = concString(commPath,command);
+	commPath = concString(commPath,pipeComm1[0]);
 	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
       write(1,"Command Found!\n",15);
       found=1;
@@ -203,32 +202,31 @@ int main(int arc, char **argv, char **envp){
       // After we create the child we proceed to make the parent wait 
       else{
 
-	int waitVal, waitStatus;
-	char buf[100];
+	int waitVal1, waitStatus1;
 	int childStatus; 
-	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
+	waitVal1= waitpid(pid1,&waitStatus1,0);//Waiting parent Zzzzz...
 	//SECOND PATH SEEKING
 	for(int j=0 ; paths[j] != '\0';j++){
 	
 	char *commPath = concString(paths[j],"/");// Concatenation of the path and the command
-	commPath = concString(commPath,command);
+	commPath = concString(commPath,pipeComm2[0]);
 	if(stat(commPath,&buf2) == 0 ){// if its found  in the path provided go ahead 
       write(1,"Command Found!\n",15);
       found=1;
       int pid2 = fork();
       if(pid2 < 0)
-	perror("For k Error");
+	perror("Fork Error");
       
-      else if( pid2==0)
-	execve(commPath,pipeComm1,envp);
-      
+      else if( pid2==0){
+	printf("Hello this is execve2\n");
+	printf("Path for second command is: %s\n",commPath);
+	execve(commPath,pipeComm2,envp);
+      }
       // After we create the child we proceed to make the parent wait 
       else{
 
-	int waitVal, waitStatus;
-	char buf[100];
-	int childStatus; 
-	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
+	int waitVal2, waitStatus2;
+	waitVal2= waitpid(pid2,&waitStatus2,0);//Waiting parent Zzzzz...
 	
       } //END SECOND wait parent 
 
