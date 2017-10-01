@@ -97,6 +97,7 @@ int main(int arc, char **argv, char **envp){
   char **tVec;//This will save the tokenized strings
   char **paths,  *path;
   struct stat buf;
+  struct stat buf2;
 
   while(out!=1){
 
@@ -192,14 +193,11 @@ int main(int arc, char **argv, char **envp){
 	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
       write(1,"Command Found!\n",15);
       found=1;
-      int pid = fork();
-
-      
-      if(pid < 0)
+      int pid1 = fork();
+      if(pid1 < 0)
 	perror("Fork Error");
-   
-
-      else if( pid==0)
+      
+      else if( pid1==0)
 	execve(commPath,pipeComm1,envp);
       
       // After we create the child we proceed to make the parent wait 
@@ -209,16 +207,46 @@ int main(int arc, char **argv, char **envp){
 	char buf[100];
 	int childStatus; 
 	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
- 
-      }
-
-	}
+	//SECOND PATH SEEKING
+	for(int j=0 ; paths[j] != '\0';j++){
 	
+	char *commPath = concString(paths[j],"/");// Concatenation of the path and the command
+	commPath = concString(commPath,command);
+	if(stat(commPath,&buf2) == 0 ){// if its found  in the path provided go ahead 
+      write(1,"Command Found!\n",15);
+      found=1;
+      int pid2 = fork();
+      if(pid2 < 0)
+	perror("For k Error");
+      
+      else if( pid2==0)
+	execve(commPath,pipeComm1,envp);
+      
+      // After we create the child we proceed to make the parent wait 
+      else{
+
+	int waitVal, waitStatus;
+	char buf[100];
+	int childStatus; 
+	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
+	
+      } //END SECOND wait parent 
+
+	}//END IF command found in Path SECOND 
+	 
+	}//END FOR checking Paths SECOND
+ 	
+      } //ENDFirst wait parent 
+
+	}//END IF command found in Path 
+	
+	}//END FOR checking Paths
+
+
+      }
     }
 
 
-      }
-    } 
     //ORIGINAL COMMAND CHECK  
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
