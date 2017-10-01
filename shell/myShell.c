@@ -93,15 +93,16 @@ char* getPrevDir(char* cwd){
 int main(int arc, char **argv, char **envp){
  
   char cmd1[60];
-  int out  =0, pID, found=0; // verifies if te program keeps running
+  int out = 0, pID, found=0; // verifies if te program keeps running
   char **tVec;//This will save the tokenized strings
   char **paths,  *path;
   struct stat buf;
+
   while(out!=1){
 
     char *command = NULL;    
     
-    write(1,"$\n",1);
+    write(1,"$",1);
     scanf("%[^\n]%*c", cmd1);
     out = stringComp(cmd1,"exit");
     tVec= myToc(cmd1,' ');
@@ -111,6 +112,9 @@ int main(int arc, char **argv, char **envp){
     path =getPath(envp);// This will call the getPath function and returns a string with all the paths
     paths=myToc(path,':');// This will separate all the paths possibles for the command by ':'
 
+    char **tPipes = myToc(cmd1,'|');
+    
+    
     // If the command is change directory "cd" then we will execute the chdir() passing the dessired directory 
     if(stringComp(command,"cd")){
        if(tVec[1]!='\0' && stringComp(tVec[1],"..")){
@@ -121,22 +125,69 @@ int main(int arc, char **argv, char **envp){
       	}
 
        else chdir(tVec[1]);
-       
-    
-    
-
-  
+         
     }
+    // If there was not a cd command then we check for any pipes, if in tPipes where we are saving our tokens for
+    //pipes at [1] is not null then we will execute the next 
+    if(tPipes[1]!='\0'){//If there is a pipe '|'
+      char **pipeComm1 = myToc(tPipes[0],' ');
+      char **pipeComm2 = myToc(tPipes[1],' ');
+      printf("La Pipa de la paz\n");
+      if(stat(command,&buf) == 0 ){
+      write(1,"Command Found with a pipe!\n",27);
+      found=1;
+      int pid = fork();     
+      
+      if(pid < 0)
+	perror("Fork Error");
 
-    else if(tVec[1]!='\0' && tVec[1]=="|"){
+      else if( pid==0){
+	printf("child: fork returned %d\n", pid);
 
-      printf("La Pipa de la paz");
+ 
+       execve(command,pipeComm1,envp);
+      }//elseifpid==0 
 
+      else{
+	printf("HEllo this is parmen\n");
+	int waitVal, waitStatus;
+	char buf[100];
+	int childStatus; 
+	printf("parent: child's pid=%d\n", pid);
 
-    
+	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
+	
+        pid = fork(); //Child 2 adopted 
+	int *pipeFds;
+	if(pid < 0)
+	perror("Fork Error");
+
+	else if( pid==0){
+	printf("child2: fork returned %d\n", pid);
+
+ 
+	//execve(command,pipeComm2,envp);
+	}
+
+	else{ //Back to parent second time 
+	
+	printf("HEllo this is parent2\n");
+        
+	printf("parent: child's pid=%d\n", pid);
+
+	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
+
+	//pipeFds = (int *) calloc(2, sizeof(int));
+	//pipe(pipeFds);
+
+	//pid = fork();
+	}
+
+      }
+      }// IF THE PATH IS GIVE FINISHED
+
+     
     }
-    
-    
     
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
@@ -151,7 +202,7 @@ int main(int arc, char **argv, char **envp){
 	perror("Fork Error");
       
 
-      else if( pID==0)
+      else if( tPipes[1]!="\0")
 	execve(command,tVec,envp);
      
     }
@@ -183,14 +234,7 @@ int main(int arc, char **argv, char **envp){
 	char buf[100];
 	int childStatus; 
 	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
-	if (waitStatus != 0){
-	  printf("Terminated with %i\n", waitStatus);
-	}
-	if (waitVal == pID)
-	  printf("child exited with value %d, %d\n", waitStatus, WEXITSTATUS(waitStatus));
-      
-	else printf("strange: waitpid returned %d\n", waitVal);
-    
+ 
       }
       }
       
