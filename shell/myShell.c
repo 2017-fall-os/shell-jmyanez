@@ -178,15 +178,48 @@ int main(int arc, char **argv, char **envp){
 	//pipeFds = (int *) calloc(2, sizeof(int));
 	//pipe(pipeFds);
 
-	//pid = fork();
+	}// Else
+
+      }//Else
+      }// IF THE PATH IS GIVE FINISHED
+      //ELSE IF THE PATH IS NOT GIVEN
+      else{
+	printf("Path not given buddy!!!\n");
+	for(int i=0 ; paths[i] != '\0';i++){
+	
+	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
+	commPath = concString(commPath,command);
+	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
+      write(1,"Command Found!\n",15);
+      found=1;
+      int pid = fork();
+
+      
+      if(pid < 0)
+	perror("Fork Error");
+   
+
+      else if( pid==0)
+	execve(commPath,pipeComm1,envp);
+      
+      // After we create the child we proceed to make the parent wait 
+      else{
+
+	int waitVal, waitStatus;
+	char buf[100];
+	int childStatus; 
+	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
+ 
+      }
+
 	}
+	
+    }
+
 
       }
-      }// IF THE PATH IS GIVE FINISHED
-
-     
-    }
-    
+    } 
+    //ORIGINAL COMMAND CHECK  
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
     //in case of failling we will try the aproach of looking trough all the paths
@@ -204,6 +237,7 @@ int main(int arc, char **argv, char **envp){
 	execve(command,tVec,envp);
      
     }
+	
     // After failing to get the path we will look in all the possible paths for the path with your exe
     
     else{
