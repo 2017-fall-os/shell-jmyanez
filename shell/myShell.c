@@ -59,22 +59,32 @@ char* concString(char* s1, char* s2){
   for( i=0; s1[i] != '\0'; i++){
     newString[i]= s1[i];
   }
-  // newString[i]='/';                         ///////// puts the slash for the directory but there could be a better way
-                                            //////// To do it in the main  this is just for meeting the deadline.   
-  
   for(int j =0; s2[j] != '\0';j++,i++){
     newString[i]=s2[j]; 
   }
   newString[i] = '\0';
 
-  printf("%s\n",newString);
   return newString;
 }
 
  
-char** getPrevDir(char* cwd){
-
-
+char* getPrevDir(char* cwd){
+  char* prevDir = (char*)malloc(100);
+  prevDir="/";
+      
+  char **dirs = myToc(cwd,'/');
+  
+    for(int i =0; dirs[i]!='\0';i++){
+      if(dirs[i+1]=='\0'){
+	printf("%s\n",prevDir);
+	return prevDir;
+      }
+      
+      prevDir=concString(prevDir,dirs[i]);
+      prevDir=concString(prevDir,"/");
+  }
+  printf("%s\n",prevDir);
+  
 }
 
 
@@ -104,14 +114,19 @@ int main(int arc, char **argv, char **envp){
     // If the command is change directory "cd" then we will execute the chdir() passing the dessired directory 
     if(stringComp(command,"cd")){
        if(tVec[1]!='\0' && stringComp(tVec[1],"..")){
+	 char* prevDir = (char*)malloc(1024);
+	 prevDir = getPrevDir(cwd);
+		 	 chdir(prevDir);
 	 
-	 getPrevDir(cwd);
-
       	}
+
+       else chdir(tVec[1]);
+       
+    
     
 
   
-
+    }
 
     else if(tVec[1]!='\0' && tVec[1]=="|"){
 
@@ -120,7 +135,7 @@ int main(int arc, char **argv, char **envp){
 
     
     }
-    }
+    
     
     
     //Check the command with stat() system call.
@@ -132,14 +147,13 @@ int main(int arc, char **argv, char **envp){
       pID = fork();
 
       
-      if(pID < 0){
-      perror("Fork Error");
-      }
-
-      else if( pID==0){
+      if(pID < 0)
+	perror("Fork Error");
       
-      execve(command,tVec,envp);
-      }
+
+      else if( pID==0)
+	execve(command,tVec,envp);
+     
     }
     // After failing to get the path we will look in all the possible paths for the path with your exe
     
@@ -155,14 +169,13 @@ int main(int arc, char **argv, char **envp){
       pID = fork();
 
       
-      if(pID < 0){
-      perror("Fork Error");
-      }
+      if(pID < 0)
+	perror("Fork Error");
+   
 
-      else if( pID==0){
+      else if( pID==0)
+	execve(commPath,tVec,envp);
       
-      execve(commPath,tVec,envp);
-      }
       // After we create the child we proceed to make the parent wait 
       else{
 
@@ -173,13 +186,12 @@ int main(int arc, char **argv, char **envp){
 	if (waitStatus != 0){
 	  printf("Terminated with %i\n", waitStatus);
 	}
-	if (waitVal == pID) {
+	if (waitVal == pID)
 	  printf("child exited with value %d, %d\n", waitStatus, WEXITSTATUS(waitStatus));
+      
+	else printf("strange: waitpid returned %d\n", waitVal);
+    
       }
-	else {
-	  printf("strange: waitpid returned %d\n", waitVal);
-    }
-  
       }
       
 	}
@@ -188,8 +200,8 @@ int main(int arc, char **argv, char **envp){
     
       if(!stringComp(command,"exit")&& found!=1){
       write(1,"Command NOT Found!\n",19);  
-    }
-    }	
+      }
+    	
       	
   }  
   return 1;
