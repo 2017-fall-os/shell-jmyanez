@@ -1,7 +1,7 @@
 
 /*
 Code created by: Jose Yanez
-Finishd: 9/24/2017-:-8:50 PM MT
+Finishd: 10/01/2017-:-9:51 PM MT
  */
 #include <stdio.h>
 #include <sys/stat.h>
@@ -10,6 +10,25 @@ Finishd: 9/24/2017-:-8:50 PM MT
 #include <unistd.h>
 #include "mytoc.c"
 #include "myShell.h"
+
+char** eliminateLastTok(char **tVec){
+  char** newVec;
+
+  for(int i=0;tVec[i+1]!='\0';i++){
+    newVec[i]=tVec[i];
+    printf("%s\n", tVec[i]);
+  }
+
+  return newVec;
+}
+
+int tokenCounter(char **tVec){
+  int i;
+  for( i=0; tVec[i] != '\0';i++){
+  
+  }
+  return i;
+}
 
 // This will recieve the enviromental variable to look for the path
 char* getPath(char **envp){
@@ -92,13 +111,13 @@ char* getPrevDir(char* cwd){
 
 int main(int arc, char **argv, char **envp){
  
-  char cmd1[150];
+  char cmd1[1024];
   int out = 0, pID, found=0; // verifies if te program keeps running
   char **tVec;//This will save the tokenized strings
   char **paths,  *path;
   struct stat buf;
   struct stat buf2;
-
+  
   while(out!=1){
 
     char *command = NULL;    
@@ -114,10 +133,76 @@ int main(int arc, char **argv, char **envp){
     paths=myToc(path,':');// This will separate all the paths possibles for the command by ':'
     
     char **tPipes = myToc(cmd1,'|');
-    
+    int tokensCounted = tokenCounter(tVec);
       
+      //NOW WE WILL CHECK IF THE USER WANTS THIS PROCESS IN THE BACKGROUND
+      if(stringComp(tVec[tokensCounted-1],"&")){
+	printf("I FOUND A BACKGROUND PROCESS\n");
+	char** tVec2 = myToc(cmd1,'&');
+	char** bgdToks =myToc(tVec[0],' ');
+       
+	 if(stat(bgdToks[0],&buf) == 0 ){
+      write(1,"Command Found!\n",15);
+      found=1;
+      pID = fork();
+
+      
+      if(pID < 0)
+	perror("Fork Error");
+      
+
+      else if( tPipes[1]!="\0"){
+	execve(bgdToks[0],tVec2,envp);
+        
+      }
+
+      else {
+	int waitVal, waitStatus;
+	char buf[100];
+	int childStatus; 
+	waitVal= waitpid(-1,&waitStatus,WNOHANG);
+	return 1;
+
+      }
+	 }
+	
+    // After failing to get the path we will look in all the possible paths for the path with your exe
+    
+    else{
+    
+      for(int i=0 ; paths[i] != '\0';i++){
+	
+	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
+	commPath = concString(commPath,bgdToks[0]);
+	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
+      write(1,"Command Found!\n",15);
+      found=1;
+      pID = fork();
+
+      
+      if(pID < 0)
+	perror("Fork Error");
+   
+
+      else if( pID==0)
+	execve(bgdToks[0],tVec2,envp);
+      
+      // After we create the child we proceed to make the parent wait 
+      else{
+
+	int waitVal, waitStatus;
+	char buf[100];
+	int childStatus; 
+	waitVal= waitpid(-1,&waitStatus,WNOHANG); //WNOHANG will make waitpid return 0; 
+      }
+      }
+      
+      }
+    }
+      }
+  
     // If the command is change directory "cd" then we will execute the chdir() passing the dessired directory 
-    if(stringComp(command,"cd")){
+      else  if(stringComp(command,"cd")){
        if(tVec[1]!='\0' && stringComp(tVec[1],"..")){
 	 char* prevDir = (char*)malloc(1024);
 	 prevDir = getPrevDir(cwd);
@@ -130,7 +215,7 @@ int main(int arc, char **argv, char **envp){
     }
     // If there was not a cd command then we check for any pipes, if in tPipes where we are saving our tokens for
     //pipes at [1] is not null then we will execute the next 
-    if(tPipes[1]!='\0'){//If there is a pipe '|'
+      else if(tPipes[1]!='\0'){//If there is a pipe '|'
       int fd[2]; //file descriptor
       char **pipeComm1 = myToc(tPipes[0],' ');
       char **pipeComm2 = myToc(tPipes[1],' ');
@@ -138,7 +223,7 @@ int main(int arc, char **argv, char **envp){
       if(stat(command,&buf) == 0 ){
 	//write(1,"Command Found with a pipe!\n",27);
       found=1;
-      pipe(fd);
+      pipe(fd); // System Call pipe !!!
       int pid = fork();     
       
       if(pid < 0)
@@ -146,14 +231,15 @@ int main(int arc, char **argv, char **envp){
 
       else if( pid==0){
         //printf("pipeComm1:\n", pipeComm1[1]);
-	dup2(fd[1],1);
-	close(fd[0]);
+	dup2(fd[1],1);//Substitute '1' with fd[1] 
+	close(fd[0]);//Close input 
 	execve(pipeComm1[0],pipeComm1,envp);
 	//execve(tPipes[0],pipeComm1,envp);
      
       }//END OF elseifpid==0 
 
-      else{
+      else
+{
 	//printf("HEllo this is parent\n");
 	int waitVal, waitStatus;
 	int childStatus; 
@@ -177,10 +263,10 @@ int main(int arc, char **argv, char **envp){
 	dup2(1,fd[1]);
 	dup2(0,fd[0]);
 	waitVal= waitpid(pid,&waitStatus,0);//Waiting parent Zzzzz...
-	}// Else
+	}// ElseEND
 
-      }//Elseo
-      }// IF THE PATH IS GIVE FINISHED
+      }//ElseEND
+      }// IF THE PATH GIVEN FINISHED
       //ELSE IF THE PATH IS NOT GIVEN
       else{
 	int fd[2]; //file descriptor
@@ -250,7 +336,6 @@ int main(int arc, char **argv, char **envp){
       }
     }
 
-
     //ORIGINAL COMMAND CHECK  
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
@@ -290,7 +375,6 @@ int main(int arc, char **argv, char **envp){
 
       else if( pID==0)
 	execve(commPath,tVec,envp);
-      
       // After we create the child we proceed to make the parent wait 
       else{
 
@@ -302,8 +386,8 @@ int main(int arc, char **argv, char **envp){
       }
       }
       
-	}
       }
+    }
 
     
       if(!stringComp(command,"exit")&& found!=1){
@@ -311,7 +395,7 @@ int main(int arc, char **argv, char **envp){
       }
     	
       	
-  }  
+  } 
   return 1;
 
   
