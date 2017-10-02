@@ -92,7 +92,7 @@ char* getPrevDir(char* cwd){
 
 int main(int arc, char **argv, char **envp){
  
-  char cmd1[100];
+  char cmd1[150];
   int out = 0, pID, found=0; // verifies if te program keeps running
   char **tVec;//This will save the tokenized strings
   char **paths,  *path;
@@ -131,60 +131,59 @@ int main(int arc, char **argv, char **envp){
     // If there was not a cd command then we check for any pipes, if in tPipes where we are saving our tokens for
     //pipes at [1] is not null then we will execute the next 
     if(tPipes[1]!='\0'){//If there is a pipe '|'
+      int fd[2]; //file descriptor
       char **pipeComm1 = myToc(tPipes[0],' ');
       char **pipeComm2 = myToc(tPipes[1],' ');
-      printf("La Pipa de la paz\n");
+      
       if(stat(command,&buf) == 0 ){
-      write(1,"Command Found with a pipe!\n",27);
+	//write(1,"Command Found with a pipe!\n",27);
       found=1;
+      pipe(fd);
       int pid = fork();     
       
       if(pid < 0)
 	perror("Fork Error");
 
       else if( pid==0){
-	printf("child: fork returned %d\n", pid);
-	execve(command,pipeComm1,envp);
+        //printf("pipeComm1:\n", pipeComm1[1]);
+	dup2(fd[1],1);
+	close(fd[0]);
+	execve(pipeComm1[0],pipeComm1,envp);
+	//execve(tPipes[0],pipeComm1,envp);
+     
       }//END OF elseifpid==0 
 
       else{
-	printf("HEllo this is parmen\n");
+	//printf("HEllo this is parent\n");
 	int waitVal, waitStatus;
 	int childStatus; 
-	printf("parent: child's pid=%d\n", pid);
 
+	close(fd[1]);
 	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
-	
         pid = fork(); //Child 2 adopted 
-	int *pipeFds;
+	
 	if(pid < 0)
 	perror("Fork Error");
 
 	else if( pid==0){
-	printf("child2: fork returned %d\n", pid);
-
- 
-	execve(command,pipeComm2,envp);
-	}
+	  dup2(fd[0],0);
+	  close(fd[1]);
+	    execve(pipeComm2[0],pipeComm2,envp);
+	  //   execve(tPipes[1],pipeComm2,envp);
+	  	}
 
 	else{ //Back to parent second time 
-	
-	printf("HEllo this is parent2\n");
-        
-	printf("parent: child's pid=%d\n", pid);
 
-	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
-
-	//pipeFds = (int *) calloc(2, sizeof(int));
-	//pipe(pipeFds);
-
+	dup2(1,fd[1]);
+	dup2(0,fd[0]);
+	waitVal= waitpid(pid,&waitStatus,0);//Waiting parent Zzzzz...
 	}// Else
 
-      }//Else
+      }//Elseo
       }// IF THE PATH IS GIVE FINISHED
       //ELSE IF THE PATH IS NOT GIVEN
       else{
-	printf("Path not given buddy!!!\n");
+	int fd[2]; //file descriptor
 	for(int i=0 ; paths[i] != '\0';i++){
 	
 	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
@@ -192,18 +191,22 @@ int main(int arc, char **argv, char **envp){
 	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
       write(1,"Command Found!\n",15);
       found=1;
+      pipe(fd);
       int pid1 = fork();
       if(pid1 < 0)
 	perror("Fork Error");
       
-      else if( pid1==0)
+      else if( pid1==0){
+	dup2(fd[1],1);
+	close(fd[0]);
 	execve(commPath,pipeComm1,envp);
-      
+      }
       // After we create the child we proceed to make the parent wait 
       else{
-
+	
 	int waitVal1, waitStatus1;
 	int childStatus; 
+	close(fd[1]);
 	waitVal1= waitpid(pid1,&waitStatus1,0);//Waiting parent Zzzzz...
 	//SECOND PATH SEEKING
 	for(int j=0 ; paths[j] != '\0';j++){
@@ -218,14 +221,17 @@ int main(int arc, char **argv, char **envp){
 	perror("Fork Error");
       
       else if( pid2==0){
-	printf("Hello this is execve2\n");
-	printf("Path for second command is: %s\n",commPath);
+	dup2(fd[0],0);
+	close(fd[1]);
 	execve(commPath,pipeComm2,envp);
+	  
       }
       // After we create the child we proceed to make the parent wait 
       else{
 
 	int waitVal2, waitStatus2;
+	dup2(1,fd[1]);
+	dup2(0,fd[0]);
 	waitVal2= waitpid(pid2,&waitStatus2,0);//Waiting parent Zzzzz...
 	
       } //END SECOND wait parent 
