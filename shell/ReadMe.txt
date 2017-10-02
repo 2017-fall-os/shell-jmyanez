@@ -5,6 +5,10 @@
 ## Assignment Part 1
 
 In this part of the assigment we were meant to use our tokeniser and system calls to create a simple shell.
+## Assignment Part 2 OCTOBER 1, 2017
+
+We worked in the implementation of the system calls: open(), close(), chdir(),pipe(), dup(), dup2().
+Still working with our product from past labs.
 
 ## Runing The Program
 
@@ -15,8 +19,6 @@ To run this program just write in the console
 
 ## Collaborations
 
-For this lab i worked with Danner Pacheco, for debbuging purposes and with Ulises Martinez who explained me
-how did a bash actually worked regarding searching for the files and paths. And explained me about how the sytem
-calls worked, and used the programs provided by Dr Freudenthal as guides to learn how to use the system calls.
-
+In this second part of the lab i collaborate with the following people, Ulises Martinez explained me how did pipes worked and minor debuggin purposes, Danner Pacheco also explained me his point of view
+regarding pipes and also minor debbugin issues.
 ## 
