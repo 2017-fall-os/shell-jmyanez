@@ -117,12 +117,12 @@ int main(int arc, char **argv, char **envp){
   char **paths,  *path;
   struct stat buf;
   struct stat buf2;
-  
+  write(1,"$",1);
   while(out!=1){
 
     char *command = NULL;    
     
-    write(1,"$",1);
+    
     scanf("%[^\n]%*c", cmd1);
     out = stringComp(cmd1,"exit");
     tVec= myToc(cmd1,' ');
