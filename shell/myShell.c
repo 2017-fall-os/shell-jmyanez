@@ -16,7 +16,7 @@ char** eliminateLastTok(char **tVec){
 
   for(int i=0;tVec[i+1]!='\0';i++){
     newVec[i]=tVec[i];
-    printf("%s\n", tVec[i]);
+    //  printf("%s\n", tVec[i]);
   }
 
   return newVec;
@@ -95,14 +95,14 @@ char* getPrevDir(char* cwd){
   
     for(int i =0; dirs[i]!='\0';i++){
       if(dirs[i+1]=='\0'){
-	printf("%s\n",prevDir);
+	//	printf("%s\n",prevDir);
 	return prevDir;
       }
       
       prevDir=concString(prevDir,dirs[i]);
       prevDir=concString(prevDir,"/");
   }
-  printf("%s\n",prevDir);
+    //  printf("%s\n",prevDir);
   
 }
 
@@ -111,38 +111,51 @@ char* getPrevDir(char* cwd){
 
 int main(int arc, char **argv, char **envp){
  
-  char cmd1[1024];
+  char cmd1 [1024];
+  cmd1[0]='\0';
   int out = 0, pID, found=0; // verifies if te program keeps running
   char **tVec;//This will save the tokenized strings
   char **paths,  *path;
   struct stat buf;
   struct stat buf2;
-  write(1,"$",1);
+ 
   while(out!=1){
-
+   
     char *command = NULL;    
     
+char foo =  scanf(" %[^\n]%*c",cmd1);
+// printf("Buffer is:%c\n",cmd1);
     
-    scanf("%[^\n]%*c", cmd1);
     out = stringComp(cmd1,"exit");
+ 
+        if(foo == EOF)exit(0);//Exit if EOF
+
+    out = stringComp(cmd1,"exit");
+
     tVec= myToc(cmd1,' ');
     char *cwd = getcwd(cwd,100);
     
     command= tVec[0];
     path =getPath(envp);// This will call the getPath function and returns a string with all the paths
     paths=myToc(path,':');// This will separate all the paths possibles for the command by ':'
+
     
     char **tPipes = myToc(cmd1,'|');
     int tokensCounted = tokenCounter(tVec);
-      
+      if(cmd1[0]=='0'){
+	cmd1[0]='0';
+	out=0;
+	scanf("%[^\n]%*c",cmd1);
+      }
+
       //NOW WE WILL CHECK IF THE USER WANTS THIS PROCESS IN THE BACKGROUND
       if(stringComp(tVec[tokensCounted-1],"&")){
-	printf("I FOUND A BACKGROUND PROCESS\n");
+	
 	char** tVec2 = myToc(cmd1,'&');
 	char** bgdToks =myToc(tVec[0],' ');
        
 	 if(stat(bgdToks[0],&buf) == 0 ){
-      write(1,"Command Found!\n",15);
+	  
       found=1;
       pID = fork();
 
@@ -151,16 +164,15 @@ int main(int arc, char **argv, char **envp){
 	perror("Fork Error");
       
 
-      else if( tPipes[1]!="\0"){
+     
+      else if(pID==0)
 	execve(bgdToks[0],tVec2,envp);
-        
-      }
 
       else {
 	int waitVal, waitStatus;
 	char buf[100];
 	int childStatus; 
-	waitVal= waitpid(-1,&waitStatus,WNOHANG);
+		waitVal= waitpid(-1,&waitStatus,WNOHANG);
 	return 1;
 
       }
@@ -175,9 +187,8 @@ int main(int arc, char **argv, char **envp){
 	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
 	commPath = concString(commPath,bgdToks[0]);
 	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
-      write(1,"Command Found!\n",15);
-      found=1;
-      pID = fork();
+	  found=1;
+	  pID = fork();
 
       
       if(pID < 0)
@@ -186,6 +197,7 @@ int main(int arc, char **argv, char **envp){
 
       else if( pID==0)
 	execve(bgdToks[0],tVec2,envp);
+     
       
       // After we create the child we proceed to make the parent wait 
       else{
@@ -230,7 +242,7 @@ int main(int arc, char **argv, char **envp){
 	perror("Fork Error");
 
       else if( pid==0){
-        //printf("pipeComm1:\n", pipeComm1[1]);
+-        //printf("pipeComm1:\n", pipeComm1[1]);
 	dup2(fd[1],1);//Substitute '1' with fd[1] 
 	close(fd[0]);//Close input 
 	execve(pipeComm1[0],pipeComm1,envp);
@@ -238,8 +250,7 @@ int main(int arc, char **argv, char **envp){
      
       }//END OF elseifpid==0 
 
-      else
-{
+      else{
 	//printf("HEllo this is parent\n");
 	int waitVal, waitStatus;
 	int childStatus; 
@@ -275,7 +286,7 @@ int main(int arc, char **argv, char **envp){
 	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
 	commPath = concString(commPath,pipeComm1[0]);
 	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
-      write(1,"Command Found!\n",15);
+	  //write(1,"Command Found!\n",15);
       found=1;
       pipe(fd);
       int pid1 = fork();
@@ -289,7 +300,6 @@ int main(int arc, char **argv, char **envp){
       }
       // After we create the child we proceed to make the parent wait 
       else{
-	
 	int waitVal1, waitStatus1;
 	int childStatus; 
 	close(fd[1]);
@@ -300,7 +310,7 @@ int main(int arc, char **argv, char **envp){
 	char *commPath = concString(paths[j],"/");// Concatenation of the path and the command
 	commPath = concString(commPath,pipeComm2[0]);
 	if(stat(commPath,&buf2) == 0 ){// if its found  in the path provided go ahead 
-      write(1,"Command Found!\n",15);
+	  //write(1,"Command Found!\n",15);
       found=1;
       int pid2 = fork();
       if(pid2 < 0)
@@ -334,69 +344,62 @@ int main(int arc, char **argv, char **envp){
 
 
       }
-    }
+      }
 
     //ORIGINAL COMMAND CHECK  
     //Check the command with stat() system call.
     //This first stat call will asume that you were given the path
     //in case of failling we will try the aproach of looking trough all the paths
-    else if(stat(command,&buf) == 0 ){
-      write(1,"Command Found!\n",15);
+       else if(stat(command,&buf) == 0 ){
+      
       found=1;
       pID = fork();
-
-      
       if(pID < 0)
 	perror("Fork Error");
-      
-
-      else if( tPipes[1]!="\0")
-	execve(command,tVec,envp);
-     
+      else if(pID==0)
+      execve(command,tVec,envp);
+	
     }
 	
     // After failing to get the path we will look in all the possible paths for the path with your exe
     
     else{
-    
-      for(int i=0 ; paths[i] != '\0';i++){
-	
-	char *commPath = concString(paths[i],"/");// Concatenation of the path and the command
+      char *commPath;
+      for(int i=0 ; paths[i] != '\0';i++){	
+	 commPath = concString(paths[i],"/");// Concatenation of the path and the command
 	commPath = concString(commPath,command);
-	if(stat(commPath,&buf) == 0 ){// if its found  in the path provided go ahead 
-      write(1,"Command Found!\n",15);
-      found=1;
-      pID = fork();
 
+	  
       
-      if(pID < 0)
-	perror("Fork Error");
-   
+      
+        // if its found  in the path provided go ahead 
+      if(stat(commPath,&buf) == 0 ){
+      found=1;
+	  pID = fork();
+	
 
-      else if( pID==0)
-	execve(commPath,tVec,envp);
+	  if(pID < 0)
+	    perror("Fork Error");
+
+	  else if( pID==0)
+	    execve(commPath,tVec,envp);
+      
+	
       // After we create the child we proceed to make the parent wait 
-      else{
-
+	else{
 	int waitVal, waitStatus;
 	char buf[100];
 	int childStatus; 
 	waitVal= waitpid(pID,&waitStatus,0);//Waiting parent Zzzzz...
- 
-      }
-      }
-      
-      }
+	}
+	  }
     }
-
-    
-      if(!stringComp(command,"exit")&& found!=1){
-      write(1,"Command NOT Found!\n",19);  
-      }
-    	
-      	
-  } 
+    }
+      //rintf("HEY\n");
+    }//END OF MASTER WHILE
+        
   return 1;
 
   
 }
+
