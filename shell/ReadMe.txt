@@ -22,3 +22,5 @@ To run this program just write in the console
 In this second part of the lab i collaborate with the following people, Ulises Martinez explained me how did pipes worked and minor debuggin purposes, Danner Pacheco also explained me his point of view
 regarding pipes and also minor debbugin issues.
 ## 
+NOT TO GRADER:
+CD just worked. your were there remember, 11/28/2017
